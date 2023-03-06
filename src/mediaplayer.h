@@ -5,6 +5,15 @@
 
 #include "window.h"
 
+#define PRESS_KEY_DELAY 0.1f
+
+#define DEFAULT_IMAGES_FOLDER "images"
+
+typedef enum {
+    APP_STATE_EXIT,
+    APP_STATE_RUNNING
+} AppState;
+
 typedef struct {
     int                 width; 
     int                 height;
@@ -15,6 +24,7 @@ typedef struct {
     const Uint8         *keys;
     float               key_presss_timer;
     int                 fps;
+    AppState            state;
 } MediaPlayer;
 
 MediaPlayer *mediaplayer_create(int width, int height);

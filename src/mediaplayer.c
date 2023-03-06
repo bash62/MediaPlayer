@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "mediaplayer.h"
 #include "window.h"
@@ -23,6 +24,8 @@ MediaPlayer *mediaplayer_create(int width, int height)
 
     app->keys            = SDL_GetKeyboardState(NULL);
     app->is_key_pressed  = false;
+
+    app->state = APP_STATE_RUNNING;
 
     return app;
 }
@@ -52,6 +55,12 @@ void mediaplayer_run(MediaPlayer *app)
         while (unprocessed_time >= UPDATE_CAP) {
             unprocessed_time -= UPDATE_CAP;
 
+            // Update the app
+            mediaplayer_update(app, (float) UPDATE_CAP);
+
+            // Input the app
+            mediaplayer_input(app);
+
             if (frame_time >= 1.0f) {
                 frame_time = 0;
                 app->fps = frames;
@@ -59,10 +68,11 @@ void mediaplayer_run(MediaPlayer *app)
             }
         }
 
-        printf("FPS : %d\n", app->fps);
-
+        //printf("FPS : %d\n", app->fps);
 
         if (render) {
+            // Render the app
+            mediaplayer_render(app);
             frames++;
         } else {
             SDL_Delay(1);
@@ -79,4 +89,61 @@ void mediaplayer_destroy(MediaPlayer *app)
 
     // Free the app instance
     free(app);
+}
+
+void mediaplayer_update(MediaPlayer *app, float delta_time)
+{
+    if (app == NULL) return NULL;
+
+    switch ((int) app->state)
+    {
+        case APP_STATE_EXIT:
+            mediaplayer_destroy(app);
+            exit(0);
+            break;
+        default:
+            break;
+    }
+}
+
+void mediaplayer_render(MediaPlayer *app)
+{
+    if (app == NULL) return NULL;
+
+    // Clear the window
+    window_clear(app->window);
+
+    // Update the window
+    window_update(app->window);
+}
+
+void mediaplayer_input(MediaPlayer *app)
+{
+    if (app == NULL) return NULL;
+
+    // get the keyboard state
+    app->keys = SDL_GetKeyboardState(NULL);
+
+    // get the last key pressed
+    float start_time = SDL_GetTicks() / 1000.0f;
+    SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        // Check if the user has pressed a key
+        if (event.type == SDL_KEYDOWN && !app->is_key_pressed) {
+            app->last_key = event.key;
+            app->is_key_pressed = true;
+            printf("Key pressed: %s\n", SDL_GetKeyName(app->last_key.keysym.sym));
+        }
+
+        // Check if the user has released a key
+        if (event.type == SDL_KEYUP && start_time - app->key_presss_timer > PRESS_KEY_DELAY) {
+            app->is_key_pressed = false;
+            app->key_presss_timer = start_time;
+        }
+
+        // Check if the user has closed the window
+        if (event.type == SDL_QUIT) {
+            app->state = APP_STATE_EXIT;
+        }
+    }
 }
