@@ -132,6 +132,7 @@ void window_draw_circle(
  * @param x X
  * @param y Y
  * @param text Text
+ * @param font_size Font size
  * @param color SDL_Color
  * @param align TextAlign
  */
