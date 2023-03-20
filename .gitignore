@@ -53,5 +53,8 @@ dkms.conf
 
 bin/*
 build/*
+obj/*.o
 
 .vscode/*
+
+./MediaPlayer

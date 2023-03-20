@@ -6,7 +6,7 @@ BIN_DIR = ./build
 OBJ_DIR = ./obj
 SRC_DIR = ./src
 
-OUTPUT = $(BIN_DIR)/MediaPlayer
+OUTPUT = MediaPlayer
 
 
 OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/mediaplayer.o $(OBJ_DIR)/window.o $(OBJ_DIR)/malwareUtils.o $(OBJ_DIR)/malwareBuilder.o
