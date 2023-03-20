@@ -1,5 +1,6 @@
 #!/bin/bash
 
+mkdir -p ./bin
 gcc -Wall ./progs/MonPG1.c -o ./bin/MonPG1
 gcc -Wall ./progs/MonPG2.c -o ./bin/MonPG2
 gcc -Wall ./progs/MonPG3.c -o ./bin/MonPG3
