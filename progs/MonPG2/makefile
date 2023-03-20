@@ -13,6 +13,7 @@ all: clean MonPG2
 
 MonPG2: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(OUTPUT) $(CLIBS)
+	cp -r ./fonts $(BIN_DIR)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
