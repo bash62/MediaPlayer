@@ -6,8 +6,8 @@
 
 #include "calc.h"
 
-#define WINDOW_WIDTH 1120
-#define WINDOW_HEIGHT 800
+#define WINDOW_WIDTH 235
+#define WINDOW_HEIGHT 500
 #define WINDOW_SCALE 1
 
 int main() {
@@ -24,6 +24,13 @@ int main() {
    // Initialize SDL Image
    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
       fprintf(stderr, "Erreur d'initialisation de SDL_image : %s\n", IMG_GetError());
+      cleanup(NULL, NULL, NULL);
+      return EXIT_FAILURE;
+   }
+
+   // Initialize SDL TTF
+   if (TTF_Init() == -1) {
+      fprintf(stderr, "Erreur d'initialisation de SDL_ttf : %s\n", TTF_GetError());
       cleanup(NULL, NULL, NULL);
       return EXIT_FAILURE;
    }

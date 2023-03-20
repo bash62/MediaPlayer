@@ -4,10 +4,19 @@
 
 #include "calc.h"
 #include "window.h"
+#include "button.h"
 
 #define APP_NAME "calc"
 
 #define _XOPEN_SOURCE 500
+
+static char *BUTTON_TEXTS[] = {
+    "C", "%", "<<", "/",
+    "7", "8", "9", "*",
+    "4", "5", "6", "-",
+    "1", "2", "3", "+",
+    "00", "0", ".", "="
+};
 
 Calc *calc_create(int width, int height)
 {
@@ -23,12 +32,27 @@ Calc *calc_create(int width, int height)
     app->window = window_create(APP_NAME, width, height);
     if (app->window == NULL) return NULL;
 
-    app->state              = APP_STATE_RUNNING;
-    app->mouse_clicked      = false;
-    app->mouse_click_timer  = 0;
+    app->state                  = APP_STATE_RUNNING;
+    app->mouse_clicked          = false;
+    app->mouse_click_timer      = 0;
 
-    app->keys               = SDL_GetKeyboardState(NULL);
-    app->is_key_pressed     = false;
+    app->keys                   = SDL_GetKeyboardState(NULL);
+    app->is_key_pressed         = false;
+
+    app->display_text           = malloc(sizeof(char) * 100);
+    strcpy(app->display_text, "0");
+
+    app->result                 = 0;
+    app->number_left            = 0;
+    app->number_right           = 0;
+    app->operation              = '\0';
+    app->do_evaluate            = false;
+    app->display_result         = false;
+
+    // Create buttons
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        app->buttons[i] = button_create(BUTTON_TEXTS[i]);
+    }
 
     return app;
 }
@@ -100,19 +124,33 @@ void calc_destroy(Calc *app)
     // Destroy the Window instance
     window_destroy(app->window);
 
+    // Destroy the buttons
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        button_destroy(app->buttons[i]);
+    }
+
     // Free the app instance
     free(app);
 }
 
 void calc_update(Calc *app, float delta_time)
 {
-    return;
+    if (app->do_evaluate) {
+        calc_evaluate(app);
+    }
 }
 
 void calc_render(Calc *app)
 {
     // Clear the window
     window_clear(app->window);
+
+    // Render the buttons
+    calc_display_buttons(app);
+
+    // Render the display
+    calc_display_result_screen(app);
+
     // Update the window
     window_update(app->window);
 }
@@ -198,7 +236,12 @@ void calc_handle_mouse(Calc *app)
 
 void calc_handle_mouse_left_click(Calc *app)
 {
-    return;
+    // Check if the user has clicked on a button
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        if (button_is_inside(app->buttons[i], app->mouse_x, app->mouse_y)) {
+            calc_handle_button_click(app, app->buttons[i]);
+        }
+    }
 }
 
 void calc_handle_mouse_right_click(Calc *app)
@@ -206,3 +249,183 @@ void calc_handle_mouse_right_click(Calc *app)
     return;
 }
 
+void calc_display_buttons(Calc *app)
+{
+    /** Display the buttons by following the BUTTON_PATTERNS
+     *     { "C",  "%",  "<<", "/" },
+     *     { "7",  "8",  "9",  "*" },
+     *     { "4",  "5",  "6",  "-" },
+     *     { "1",  "2",  "3",  "+" },
+     *     { "00", "0",  ".",  "=" }
+     */
+    int x = 10;
+    int y = 200;
+    for (int i = 0; i < BUTTON_COUNT; i++) {
+        if (i % BUTTONS_PER_ROW == 0 && i != 0) {
+            x = 10;
+            y += BUTTON_HEIGHT + BUTTON_PADDING;
+        }
+        button_render(app->buttons[i], app->window, x, y);
+        x += BUTTON_WIDTH + BUTTON_PADDING;
+    }
+}
+
+void calc_handle_button_click(Calc *app, Button *button)
+{
+    // Check if the user has clicked on the 'C' button
+    if (strcmp(button->text, "C") == 0) {
+        app->result = 0;
+        app->display_text = "0";
+        return;
+    }
+
+    // Check if the user has clicked on the '<<' button
+    if (strcmp(button->text, "<<") == 0) {
+        if (strlen(app->display_text) > 1) {
+            app->display_text[strlen(app->display_text) - 1] = '\0';
+        } else {
+            app->display_text = "0";
+        }
+        return;
+    }
+
+    // Check if the user has clicked on the '=' button
+    if (strcmp(button->text, "=") == 0) {
+        app->display_result     = true;
+        app->operation_clicked  = false;
+        app->do_evaluate        = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '%' button
+    if (strcmp(button->text, "%") == 0) {
+        strcat(app->display_text, " %");
+        app->operation = '%';
+        app->operation_clicked = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '/' button
+    if (strcmp(button->text, "/") == 0) {
+        strcat(app->display_text, " /");
+        app->operation = '/';
+        app->operation_clicked = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '*' button
+    if (strcmp(button->text, "*") == 0) {
+        strcat(app->display_text, " *");
+        app->operation = '*';
+        app->operation_clicked = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '-' button
+    if (strcmp(button->text, "-") == 0) {
+        strcat(app->display_text, " -");
+        app->operation = '-';
+        app->operation_clicked = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '+' button
+    if (strcmp(button->text, "+") == 0) {
+        strcat(app->display_text, " +");
+        app->operation = '+';
+        app->operation_clicked = true;
+        return;
+    }
+
+    // Check if the user has clicked on the '.' button
+    if (strcmp(button->text, ".") == 0) {
+        if (strchr(app->display_text, '.') == NULL) {
+            app->display_text = strcat(app->display_text, ".");
+        }
+        return;
+    }
+
+    // Check if the user has clicked on the '00' button
+    if (strcmp(button->text, "00") == 0) {
+        strcat(app->display_text, "00");
+        return;
+    }
+
+    // Check if the user has clicked on the '0' button
+    if (strcmp(button->text, "0") == 0) {
+        if (strcmp(app->display_text, "0") != 0) {
+            strcat(app->display_text, "0");
+        }
+        return;
+    }
+
+    // Check if the user has clicked on a number button
+    if (strcmp(button->text, "1") == 0 ||
+        strcmp(button->text, "2") == 0 ||
+        strcmp(button->text, "3") == 0 ||
+        strcmp(button->text, "4") == 0 ||
+        strcmp(button->text, "5") == 0 ||
+        strcmp(button->text, "6") == 0 ||
+        strcmp(button->text, "7") == 0 ||
+        strcmp(button->text, "8") == 0 ||
+        strcmp(button->text, "9") == 0) {
+        if (strcmp(app->display_text, "0") == 0) {
+            strcpy(app->display_text, button->text);
+        } else {
+            strcat(app->display_text, " ");
+            strcat(app->display_text, button->text);
+        }
+        if (app->operation_clicked) {
+            app->number_right       = atof(button->text);
+        } else {
+            app->number_left        = atof(button->text);
+        }
+        return;
+    }
+}
+
+void calc_display_result_screen(Calc *app)
+{
+    SDL_Rect rect = { 10, 10, 215, 180};
+    window_draw_rect(app->window, &rect, WHITE_COLOR);
+
+    char *display_text = malloc(sizeof(char) * 100);
+    sprintf(display_text, "%s", app->display_text);
+    window_draw_text(app->window, 20, 20, display_text, 15, WHITE_COLOR, ALIGN_LEFT);
+
+    char *result_text = malloc(sizeof(char) * 100);
+    sprintf(result_text, "%.2f", app->result);
+    window_draw_text(app->window, 215 - strlen(result_text), 175, result_text, 30, WHITE_COLOR, ALIGN_RIGHT);
+
+    free(result_text);
+    free(display_text);
+}
+
+void calc_evaluate(Calc *app)
+{
+    switch (app->operation)
+    {
+    case '+':
+        app->result = app->number_left + app->number_right;
+        break;
+    case '-':
+        app->result = app->number_left - app->number_right;
+        break;
+    case '*':
+        app->result = app->number_left * app->number_right;
+        break;
+    case '/':
+        app->result = app->number_left / app->number_right;
+        break;
+    case '%':
+        app->result = app->number_left / 100;
+        break;
+    default:
+        break;
+    }
+
+    app->do_evaluate        = false;
+    app->operation_clicked  = false;
+    app->number_left        = app->result;
+    sprintf(app->display_text, "%.2f", app->result);
+}

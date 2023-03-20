@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 
+#include "button.h"
 #include "window.h"
 
 #define PRESS_KEY_DELAY     0.1f // seconds
@@ -14,7 +15,7 @@ typedef enum {
 } AppState;
 
 typedef struct {
-    int                     width; 
+    int                     width;
     int                     height;
     Window                  *window;
     bool                    is_paused;
@@ -26,6 +27,18 @@ typedef struct {
 
     int                     fps;
     AppState                state;
+
+    Button                  *buttons[BUTTON_COUNT];
+
+    char                    *display_text;
+    float                   result;
+    int                     number_left;
+    int                     number_right;
+    char                    operation;
+    bool                    display_result;
+    bool                    do_evaluate;
+    bool                    number_clicked;
+    bool                    operation_clicked;
 
     SDL_MouseButtonEvent    mouse_button;
     Sint32                  mouse_x;
@@ -53,5 +66,13 @@ void calc_handle_mouse(Calc *app);
 void calc_handle_mouse_left_click(Calc *app);
 
 void calc_handle_mouse_right_click(Calc *app);
+
+void calc_display_buttons(Calc *app);
+
+void calc_handle_button_click(Calc *app, Button *button);
+
+void calc_display_result_screen(Calc *app);
+
+void calc_evaluate(Calc *app);
 
 #endif // _CALC_H_

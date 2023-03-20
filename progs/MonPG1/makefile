@@ -7,7 +7,7 @@ OBJ_DIR = ./obj
 SRC_DIR = ./src
 
 OUTPUT = $(BIN_DIR)/MonPG1
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/calc.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/button.o $(OBJ_DIR)/window.o $(OBJ_DIR)/calc.o 
 
 all: clean MonPG1
 
