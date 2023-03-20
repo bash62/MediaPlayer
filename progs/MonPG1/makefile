@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -g -Wall
 CLIBS = -lm -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
-BIN_DIR = ./bin
+BIN_DIR = ../../bin
 OBJ_DIR = ./obj
 SRC_DIR = ./src
 
