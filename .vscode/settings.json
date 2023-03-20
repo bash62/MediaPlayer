@@ -1,7 +1,0 @@
-{
-    "files.associations": {
-        "array": "c",
-        "malwarebuilder.h": "c",
-        "stdio.h": "c"
-    }
-}

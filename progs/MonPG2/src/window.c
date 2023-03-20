@@ -44,6 +44,13 @@ Window *window_create(char *title, int width, int height)
       return NULL;
   }
 
+  window->font = TTF_OpenFont("fonts/font.ttf", 24);
+  if (window->font == NULL) {
+    fprintf(stderr, "Erreur lors de la création de la police : %s\n", TTF_GetError());
+    cleanup(window->window, window->renderer, NULL);
+    return NULL;
+  }
+
   return window;
 }
 
