@@ -30,6 +30,7 @@ typedef struct {
     int width;
     int height;
     char *title;
+    bool fullscreen;
 } Window;
 
 /**
@@ -215,5 +216,11 @@ void window_draw_sprite(
     double angle, 
     SDL_RendererFlip flip
 );
+
+/**
+ * @brief Toggle fullscreen
+ * @param window Window
+ */
+void window_toggle_fullscreen(Window *window);
 
 #endif // _WINDOW_H_

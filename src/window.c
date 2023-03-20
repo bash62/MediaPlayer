@@ -23,11 +23,12 @@ void cleanup(SDL_Window* window, SDL_Renderer* renderer, SDL_Texture* texture)
 
 Window *window_create(char *title, int width, int height)
 {
-  Window *window = malloc(sizeof(Window));
-  window->width = width;
-  window->height = height;
-  window->title = title;
-  window->font = NULL;
+  Window *window      = malloc(sizeof(Window));
+  window->width       = width;
+  window->height      = height;
+  window->title       = title;
+  window->font        = NULL;
+  window->fullscreen  = false;
 
   window->window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
   if (window->window == NULL) {
@@ -255,7 +256,6 @@ void window_rotate_texture(
   }
 }
 
-
 void window_draw_sprite(
   Window *window, 
   SDL_Texture *texture, 
@@ -269,5 +269,16 @@ void window_draw_sprite(
     fprintf(stderr, "Erreur lors du rendu de la texture : %s\n", SDL_GetError());
     cleanup(window->window, window->renderer, texture);
     return;
+  }
+}
+
+void window_toggle_fullscreen(Window *window)
+{
+  if (window->fullscreen) {
+    SDL_SetWindowFullscreen(window->window, 0);
+    window->fullscreen = false;
+  } else {
+    SDL_SetWindowFullscreen(window->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    window->fullscreen = true;
   }
 }

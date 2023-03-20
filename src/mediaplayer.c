@@ -23,14 +23,17 @@ MediaPlayer *mediaplayer_create(int width, int height)
     app->window = window_create(APP_NAME, width, height);
     if (app->window == NULL) return NULL;
 
-    app->keys               = SDL_GetKeyboardState(NULL);
-    app->is_key_pressed     = false;
-
     app->state              = APP_STATE_RUNNING;
     app->current_image      = 0;
     app->images_count       = 0;
     app->auto_play          = false;
     app->auto_play_timer    = 0;
+
+    app->mouse_clicked      = false;
+    app->mouse_click_timer  = 0;
+
+    app->keys               = SDL_GetKeyboardState(NULL);
+    app->is_key_pressed     = false;
 
     app->images             = mediaplayer_read_images(app, DEFAULT_IMAGES_FOLDER);
     if (app->images == NULL) {
@@ -64,11 +67,25 @@ void mediaplayer_run(MediaPlayer *app)
         while (unprocessed_time >= UPDATE_CAP) {
             unprocessed_time -= UPDATE_CAP;
 
-            // Update the app
-            mediaplayer_update(app, (float) UPDATE_CAP);
-
             // Input the app
             mediaplayer_input(app);
+
+            switch ((int) app->state)
+            {
+                case APP_STATE_EXIT:
+                    mediaplayer_destroy(app);
+                    exit(0);
+                    break;
+                case APP_STATE_RUNNING:
+                    mediaplayer_handle_keys(app);
+                    mediaplayer_handle_mouse(app);
+                    break;
+                default:
+                    break;
+            }
+
+            // Update the app
+            mediaplayer_update(app, (float) UPDATE_CAP);
 
             if (frame_time >= 1.0f) {
                 frame_time  = 0;
@@ -100,16 +117,21 @@ void mediaplayer_destroy(MediaPlayer *app)
 
 void mediaplayer_update(MediaPlayer *app, float delta_time)
 {
-    switch ((int) app->state)
-    {
-        case APP_STATE_EXIT:
-            mediaplayer_destroy(app);
-            exit(0);
-            break;
-        case APP_STATE_RUNNING:
-            mediaplayer_next_image(app);
-        default:
-            break;
+    // Get the current time
+    float start_time = SDL_GetTicks() / 1000.0f;
+
+    // Check if the user has enabled the auto play
+    if (app->auto_play && start_time - app->auto_play_timer > AUTO_PLAY_DELAY) {
+        app->current_image++;
+        app->auto_play_timer = start_time;
+    }
+
+    // Check if the current image is out of bounds
+    // Note: This might be the last check before rendering the image
+    if (app->current_image < 0) {
+        app->current_image = app->images_count - 1;
+    } else if (app->current_image >= app->images_count) {
+        app->current_image = 0;
     }
 }
 
@@ -155,6 +177,21 @@ void mediaplayer_input(MediaPlayer *app)
         // Check if the user has closed the window
         if (event.type == SDL_QUIT) {
             app->state = APP_STATE_EXIT;
+        }
+
+        // Check if the user has clicked on the window
+        if (event.type == SDL_MOUSEBUTTONDOWN && !app->mouse_clicked) {
+            app->mouse_button   = event.button;
+            app->mouse_x        = event.button.x;
+            app->mouse_y        = event.button.y;
+            app->mouse_clicked  = true;
+            //printf("Mouse button pressed: %d\n", app->mouse_button.button);
+        }
+
+        // Check if the user has released the mouse button
+        if (event.type == SDL_MOUSEBUTTONUP && start_time - app->mouse_click_timer > PRESS_MOUSE_DELAY) {
+            app->mouse_clicked      = false;
+            app->mouse_click_timer  = start_time;
         }
     }
 }
@@ -235,56 +272,88 @@ char **mediaplayer_read_images(MediaPlayer *app, char *images_folder)
     return images;
 }
 
-void mediaplayer_next_image(MediaPlayer *app)
+void mediaplayer_handle_keys(MediaPlayer *app)
 {
     // Check if the user has pressed a key
-    if (app->is_key_pressed) {
-        // Check if the user has pressed the right key
-        if (app->last_key.keysym.sym == SDLK_RIGHT) {
-            app->current_image++;
-            app->is_key_pressed = false;
-        }
+    if (!app->is_key_pressed) return;
 
-        // Check if the user has pressed the left key
-        if (app->last_key.keysym.sym == SDLK_LEFT) {
-            app->current_image--;
-            app->is_key_pressed = false;
-        }
-
-        // Check if the user has pressed the 'd' key
-        if (app->last_key.keysym.sym == SDLK_d) {
-            app->auto_play = !app->auto_play;
-            printf("Auto play: %s\n", app->auto_play ? "enabled" : "disabled");
-            app->is_key_pressed = false;
-        }
-    }
-
-    // Get the current time
-    float start_time = SDL_GetTicks() / 1000.0f;
-
-    // Check if the user has enabled the auto play
-    if (app->auto_play && start_time - app->auto_play_timer > AUTO_PLAY_DELAY) {
+    // Check if the user has pressed the right key
+    if (app->last_key.keysym.sym == SDLK_RIGHT) {
         app->current_image++;
-        app->auto_play_timer = start_time;
     }
 
-    // Check if the current image is out of bounds
-    if (app->current_image < 0) {
-        app->current_image = app->images_count - 1;
-    } else if (app->current_image >= app->images_count) {
-        app->current_image = 0;
+    // Check if the user has pressed the left key
+    if (app->last_key.keysym.sym == SDLK_LEFT) {
+        app->current_image--;
+    }
+
+    // Check if the user has pressed the 'd' key
+    if (app->last_key.keysym.sym == SDLK_d) {
+        app->auto_play = !app->auto_play;
+        printf("Auto play: %s\n", app->auto_play ? "enabled" : "disabled");
+    }
+
+    // Check if the user has pressed the 'f' key
+    if (app->last_key.keysym.sym == SDLK_f) {
+        window_toggle_fullscreen(app->window);
+        printf("Fullscreen: %s\n", app->window->fullscreen ? "enabled" : "disabled");
+    }
+
+    // Check if the user has pressed the 'q' key
+    if (app->last_key.keysym.sym == SDLK_q) {
+        app->state = APP_STATE_EXIT;
+    }
+
+    app->is_key_pressed = false;
+}
+
+void mediaplayer_handle_mouse(MediaPlayer *app)
+{
+    // Check if the user has clicked on the window
+    if (!app->mouse_clicked) return;
+
+    if (app->mouse_button.button == SDL_BUTTON_LEFT) {
+        mediaplayer_handle_mouse_left_click(app);
+    }
+
+    if (app->mouse_button.button == SDL_BUTTON_RIGHT) {
+        mediaplayer_handle_mouse_right_click(app);
+    }
+
+    app->mouse_clicked = false;
+}
+
+void mediaplayer_handle_mouse_left_click(MediaPlayer *app)
+{
+    // Check if the user has clicked on the right side of the window
+    if (app->mouse_x > app->window->width / 2) {
+        app->current_image++;
+    } else {
+        app->current_image--;
     }
 }
 
+void mediaplayer_handle_mouse_right_click(MediaPlayer *app)
+{
+    // Check if the user has clicked on the right side of the window
+    if (app->mouse_x > app->window->width / 2) {
+        app->auto_play = !app->auto_play;
+        printf("Auto play: %s\n", app->auto_play ? "enabled" : "disabled");
+    } else {
+        window_toggle_fullscreen(app->window);
+        printf("Fullscreen: %s\n", app->window->fullscreen ? "enabled" : "disabled");
+    }
+}
+
+
 void mediaplayer_display_auto_play(MediaPlayer *app)
 {
-    char *auto_play = "Auto play: ";
-    char *auto_play_status = app->auto_play ? "ON" : "OFF";
+    char *auto_play         = "Auto play: ";
+    char *auto_play_status  = app->auto_play ? "ON" : "OFF";
 
-    char *text = malloc(sizeof(char) * (strlen(auto_play) + strlen(auto_play_status) + 1));
+    char *text              = malloc(sizeof(char) * (strlen(auto_play) + strlen(auto_play_status) + 1));
 
     strcpy(text, auto_play);
     strcat(text, auto_play_status);
 
-    printf("%s\n", text);
 }
