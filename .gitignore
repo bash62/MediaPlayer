@@ -50,7 +50,8 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-
+**/bin/*
+**/obj/*
 bin/*
 build/*
 obj/*.o

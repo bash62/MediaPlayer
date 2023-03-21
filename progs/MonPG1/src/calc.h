@@ -14,6 +14,14 @@ typedef enum {
     APP_STATE_RUNNING
 } AppState;
 
+typedef enum {
+    ADD,
+    SUBTRACT,
+    MULTIPLY,
+    DIVIDE,
+    MODULO
+} Operation;
+
 typedef struct {
     int                     width;
     int                     height;
@@ -32,13 +40,8 @@ typedef struct {
 
     char                    *display_text;
     float                   result;
-    int                     number_left;
-    int                     number_right;
-    char                    operation;
-    bool                    display_result;
-    bool                    do_evaluate;
-    bool                    number_clicked;
-    bool                    operation_clicked;
+    float                   number_left;
+    float                   number_right;
 
     SDL_MouseButtonEvent    mouse_button;
     Sint32                  mouse_x;
@@ -73,6 +76,6 @@ void calc_handle_button_click(Calc *app, Button *button);
 
 void calc_display_result_screen(Calc *app);
 
-void calc_evaluate(Calc *app);
+float calc_evaluate(Calc *app);
 
 #endif // _CALC_H_
