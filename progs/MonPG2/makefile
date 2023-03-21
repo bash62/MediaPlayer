@@ -3,10 +3,12 @@ CFLAGS = -g -Wall
 CLIBS = -lm -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
 BIN_DIR = ../../bin
+LOCAL_BIN_DIR = ./bin
 OBJ_DIR = ./obj
 SRC_DIR = ./src
 
 OUTPUT = $(BIN_DIR)/MonPG2
+LOCAL_OUTPUT = $(LOCAL_BIN_DIR)/MonPG2
 OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/human_bench.o
 
 all: clean MonPG2
@@ -14,6 +16,10 @@ all: clean MonPG2
 MonPG2: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(OUTPUT) $(CLIBS)
 	cp -r ./fonts $(BIN_DIR)
+
+local: $(OBJS)
+	mkdir -p $(LOCAL_BIN_DIR)
+	$(CC) $(CFLAGS) $(OBJS) -o $(LOCAL_OUTPUT) $(CLIBS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	mkdir -p $(@D)
