@@ -9,6 +9,22 @@
 
 #define _XOPEN_SOURCE 500
 
+static const char *target_size_names[] = {
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+};
+
+static const int target_size_values[] = {
+    TARGET_SIZE_XS,
+    TARGET_SIZE_S,
+    TARGET_SIZE_M,
+    TARGET_SIZE_L,
+    TARGET_SIZE_XL,
+};
+
 HumanBench *human_bench_create(int width, int height)
 {
     HumanBench *app = malloc(sizeof(*app));
@@ -23,22 +39,29 @@ HumanBench *human_bench_create(int width, int height)
     app->window = window_create(APP_NAME, width, height);
     if (app->window == NULL) return NULL;
 
-    app->state              = APP_STATE_INIT;
-    app->mouse_clicked      = false;
-    app->mouse_click_timer  = 0;
+    app->state                  = APP_STATE_INIT;
+    app->mouse_clicked          = false;
+    app->mouse_click_timer      = 0;
 
-    app->score              = 0;
-    app->errors             = 0;
+    app->is_inside_target       = false;
+    app->score                  = 0;
+    app->errors                 = 0;
 
-    app->best_time          = 0.0f;
-    app->current_time       = 0.0f;
-    app->start_time         = 0.0f;
-    app->end_time           = 0.0f;
-    app->is_inside_target   = false;
-    app->target_color       = (SDL_Color) { 255, 0, 0, 255 };
+    app->target_size            = TARGET_DEFAULT_SIZE;
+    app->target_color           = (SDL_Color) { 255, 0, 0, 255 };
 
-    app->keys               = SDL_GetKeyboardState(NULL);
-    app->is_key_pressed     = false;
+    app->best_time              = 0.0f;
+    app->current_time           = 0.0f;
+    app->average_time           = 0.0f;
+    app->average_time_sum       = 0.0f;
+    app->start_time             = 0.0f;
+    app->end_time               = 0.0f;
+
+    app->keys                   = SDL_GetKeyboardState(NULL);
+    app->is_key_pressed         = false;
+
+    app->selected_button        = START_BUTTON;
+    app->selected_target_size   = 2;
 
     return app;
 }
@@ -118,6 +141,9 @@ void human_bench_destroy(HumanBench *app)
 void human_bench_update(HumanBench *app, float delta_time)
 {
     if (app->state == APP_STATE_RUNNING) {
+        if (app->score + app->errors == 100) {
+            app->state = APP_STATE_MENU;
+        }
     }
 }
 
@@ -140,6 +166,9 @@ void human_bench_render(HumanBench *app)
 
         // Render the current time
         human_bench_display_current_time(app);
+
+        // Render the average time
+        human_bench_display_average_time(app);
 
         // Render the score
         human_bench_display_score(app);
@@ -214,11 +243,49 @@ void human_bench_handle_keys(HumanBench *app)
         app->state = APP_STATE_EXIT;
     }
 
-    if (app->last_key.keysym.sym == SDLK_SPACE && app->state == APP_STATE_INIT) {
-        app->state      = APP_STATE_RUNNING;
-        app->start_time = SDL_GetTicks() / 1000.0f;
+    if (app->last_key.keysym.sym == SDLK_SPACE && app->state == APP_STATE_MENU) {
+        app->state              = APP_STATE_INIT;
+        app->score              = 0;
+        app->errors             = 0;
+        app->best_time          = 0;
+        app->average_time       = 0;
+        app->current_time       = 0;
+        app->average_time_sum   = 0;
+    }
 
-        human_bench_generate_target(app);
+    if (app->last_key.keysym.sym == SDLK_DOWN && app->state == APP_STATE_INIT) {
+        app->selected_button = (app->selected_button + 1) % BUTTON_COUNT;
+    }
+
+    if (app->last_key.keysym.sym == SDLK_UP && app->state == APP_STATE_INIT) {
+        app->selected_button = (app->selected_button + BUTTON_COUNT - 1) % BUTTON_COUNT;
+    }
+
+    if (app->last_key.keysym.sym == SDLK_RETURN && app->state == APP_STATE_INIT) {
+        if (app->selected_button == START_BUTTON) {
+            app->state      = APP_STATE_RUNNING;
+            app->start_time = SDL_GetTicks() / 1000.0f;
+
+            human_bench_generate_target(app);
+        }
+
+        if (app->selected_button == EXIT_BUTTON) {
+            app->state = APP_STATE_EXIT;
+        }
+    }
+
+    if (app->last_key.keysym.sym == SDLK_LEFT && app->state == APP_STATE_INIT) {
+        if (app->selected_button == TARGET_SIZE_BUTTON) {
+            app->selected_target_size   = (app->selected_target_size + 5 - 1) % 5;
+            app->target_size            = target_size_values[app->selected_target_size];
+        }
+    }
+
+    if (app->last_key.keysym.sym == SDLK_RIGHT && app->state == APP_STATE_INIT) {
+        if (app->selected_button == TARGET_SIZE_BUTTON) {
+            app->selected_target_size   = (app->selected_target_size + 1) % 5;
+            app->target_size            = target_size_values[app->selected_target_size];
+        }
     }
 
     app->is_key_pressed = false;
@@ -245,10 +312,10 @@ void human_bench_handle_mouse_left_click(HumanBench *app)
     if (app->state == APP_STATE_RUNNING) {
 
         app->end_time = SDL_GetTicks() / 1000.0f;
-        app->is_inside_target = app->mouse_x >= app->target_x - TARGET_RADIUS && 
-            app->mouse_x <= app->target_x + TARGET_RADIUS &&
-            app->mouse_y >= app->target_y - TARGET_RADIUS && 
-            app->mouse_y <= app->target_y + TARGET_RADIUS;
+        app->is_inside_target = app->mouse_x >= app->target_x - app->target_size && 
+            app->mouse_x <= app->target_x + app->target_size &&
+            app->mouse_y >= app->target_y - app->target_size && 
+            app->mouse_y <= app->target_y + app->target_size;
 
         human_bench_generate_target(app);
 
@@ -268,6 +335,13 @@ void human_bench_handle_mouse_left_click(HumanBench *app)
 
             app->errors++;
         }
+
+        app->average_time_sum += app->current_time;
+        app->average_time = app->average_time_sum / (app->score + app->errors);
+    }
+
+    if (app->state == APP_STATE_MENU) {
+        app->state = APP_STATE_INIT;
     }
 }
 
@@ -279,21 +353,38 @@ void human_bench_handle_mouse_right_click(HumanBench *app)
 void human_bench_generate_target(HumanBench *app)
 {
     // Generate a random target position
-    app->target_x = rand() % (app->window->width - TARGET_RADIUS) + TARGET_RADIUS;
-    app->target_y = rand() % (app->window->height - TARGET_RADIUS) + TARGET_RADIUS;
+    app->target_x = rand() % (app->window->width - app->target_size) + app->target_size;
+    app->target_y = rand() % (app->window->height - app->target_size) + app->target_size;
 }
 
 void human_bench_display_init(HumanBench *app)
 {
-    // Display "Right click to start"
-    char *text = "Press SPACE to start";
+    // Display "START" button
+    char *text = "START";
     window_draw_text(app->window, app->window->width / 2, app->window->height / 2, text, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display target size setting
+    char text2[100];
+    sprintf(text2, "TARGET SIZE < %s >", target_size_names[app->selected_target_size]);
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2 + 50, text2, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display "EXIT" button
+    char *text3 = "EXIT";
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2 + 100, text3, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display the selected button
+    SDL_Rect rect;
+    rect.x = app->window->width / 2 - 100;
+    rect.y = app->window->height / 2 + 50 * app->selected_button - 20;
+    rect.w = 250;
+    rect.h = 40;
+    window_draw_rect(app->window, &rect, WHITE_COLOR);
 }
 
 void human_bench_display_target(HumanBench *app)
 {
     // Display the target
-    window_draw_circle(app->window, app->target_x, app->target_y, TARGET_RADIUS, app->is_inside_target ? GREEN_COLOR : RED_COLOR);
+    window_draw_circle(app->window, app->target_x, app->target_y, app->target_size, app->is_inside_target ? GREEN_COLOR : RED_COLOR);
 }
 
 void human_bench_display_best_time(HumanBench *app)
@@ -312,18 +403,42 @@ void human_bench_display_current_time(HumanBench *app)
     window_draw_text(app->window, 2, 45, text, 30, WHITE_COLOR, ALIGN_LEFT);
 }
 
+void human_bench_display_average_time(HumanBench *app)
+{
+    // Display the average time
+    char text[100];
+    sprintf(text, "Average time: %.2f ms", app->average_time * 1000);
+    window_draw_text(app->window, 2, 80, text, 30, WHITE_COLOR, ALIGN_LEFT);
+}
+
 void human_bench_display_score(HumanBench *app)
 {
     // Display the score
     char text[100];
     sprintf(text, "%d / %d / 100", app->score, app->errors);
-    window_draw_text(app->window, 2, 80, text, 30, GREEN_COLOR, ALIGN_LEFT);
+    window_draw_text(app->window, 2, 115, text, 30, WHITE_COLOR, ALIGN_LEFT);
 }
 
 void human_bench_display_menu(HumanBench *app)
 {
     // Display the end message
     char text[100];
-    sprintf(text, "Your score: %d / 100", app->score);
+    if (app->score >= app->errors) {
+        sprintf(text, "You win!");
+    } else {
+        sprintf(text, "You lose!");
+    }
     window_draw_text(app->window, app->window->width / 2, app->window->height / 2, text, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display the score
+    sprintf(text, "Score: %d / %d / 100", app->score, app->errors);
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2 + 35, text, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display the best time
+    sprintf(text, "Best time: %.2f ms", app->best_time * 1000);
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2 + 70, text, 30, WHITE_COLOR, ALIGN_CENTER);
+
+    // Display the average time
+    sprintf(text, "Average time: %.2f ms", app->average_time * 1000);
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2 + 105, text, 30, WHITE_COLOR, ALIGN_CENTER);
 }
