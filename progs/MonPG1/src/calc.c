@@ -40,14 +40,11 @@ Calc *calc_create(int width, int height)
     app->is_key_pressed         = false;
 
     app->display_text           = malloc(sizeof(char) * 100);
-    strcpy(app->display_text, "0");
+    strcpy(app->display_text, "0.00");
 
     app->result                 = 0;
     app->number_left            = 0;
     app->number_right           = 0;
-    app->operation              = '\0';
-    app->do_evaluate            = false;
-    app->display_result         = false;
 
     // Create buttons
     for (int i = 0; i < BUTTON_COUNT; i++) {
@@ -135,9 +132,7 @@ void calc_destroy(Calc *app)
 
 void calc_update(Calc *app, float delta_time)
 {
-    if (app->do_evaluate) {
-        calc_evaluate(app);
-    }
+    return;
 }
 
 void calc_render(Calc *app)
@@ -275,72 +270,60 @@ void calc_handle_button_click(Calc *app, Button *button)
     // Check if the user has clicked on the 'C' button
     if (strcmp(button->text, "C") == 0) {
         app->result = 0;
-        app->display_text = "0";
+        app->display_text = "0.00";
         return;
     }
 
     // Check if the user has clicked on the '<<' button
     if (strcmp(button->text, "<<") == 0) {
-        if (strlen(app->display_text) > 1) {
+        if (strlen(app->display_text) > 1 && strcmp(app->display_text, "0.00") != 0) {
             app->display_text[strlen(app->display_text) - 1] = '\0';
         } else {
-            app->display_text = "0";
+            app->display_text = "0.00";
         }
         return;
     }
 
     // Check if the user has clicked on the '=' button
     if (strcmp(button->text, "=") == 0) {
-        app->display_result     = true;
-        app->operation_clicked  = false;
-        app->do_evaluate        = true;
+        app->result = calc_evaluate(app);
         return;
     }
 
     // Check if the user has clicked on the '%' button
     if (strcmp(button->text, "%") == 0) {
-        strcat(app->display_text, " %");
-        app->operation = '%';
-        app->operation_clicked = true;
+        strcat(app->display_text, " % ");
         return;
     }
 
     // Check if the user has clicked on the '/' button
     if (strcmp(button->text, "/") == 0) {
-        strcat(app->display_text, " /");
-        app->operation = '/';
-        app->operation_clicked = true;
+        strcat(app->display_text, " / ");
         return;
     }
 
     // Check if the user has clicked on the '*' button
     if (strcmp(button->text, "*") == 0) {
-        strcat(app->display_text, " *");
-        app->operation = '*';
-        app->operation_clicked = true;
+        strcat(app->display_text, " * ");
         return;
     }
 
     // Check if the user has clicked on the '-' button
     if (strcmp(button->text, "-") == 0) {
-        strcat(app->display_text, " -");
-        app->operation = '-';
-        app->operation_clicked = true;
+        strcat(app->display_text, " - ");
         return;
     }
 
     // Check if the user has clicked on the '+' button
     if (strcmp(button->text, "+") == 0) {
-        strcat(app->display_text, " +");
-        app->operation = '+';
-        app->operation_clicked = true;
+        strcat(app->display_text, " + ");
         return;
     }
 
     // Check if the user has clicked on the '.' button
     if (strcmp(button->text, ".") == 0) {
         if (strchr(app->display_text, '.') == NULL) {
-            app->display_text = strcat(app->display_text, ".");
+            strcat(app->display_text, ".");
         }
         return;
     }
@@ -353,14 +336,15 @@ void calc_handle_button_click(Calc *app, Button *button)
 
     // Check if the user has clicked on the '0' button
     if (strcmp(button->text, "0") == 0) {
-        if (strcmp(app->display_text, "0") != 0) {
+        if (strcmp(app->display_text, "0.00") != 0) {
             strcat(app->display_text, "0");
         }
         return;
     }
 
     // Check if the user has clicked on a number button
-    if (strcmp(button->text, "1") == 0 ||
+    if (
+        strcmp(button->text, "1") == 0 ||
         strcmp(button->text, "2") == 0 ||
         strcmp(button->text, "3") == 0 ||
         strcmp(button->text, "4") == 0 ||
@@ -368,17 +352,13 @@ void calc_handle_button_click(Calc *app, Button *button)
         strcmp(button->text, "6") == 0 ||
         strcmp(button->text, "7") == 0 ||
         strcmp(button->text, "8") == 0 ||
-        strcmp(button->text, "9") == 0) {
-        if (strcmp(app->display_text, "0") == 0) {
-            strcpy(app->display_text, button->text);
+        strcmp(button->text, "9") == 0
+    ) {
+        if (strcmp(app->display_text, "0.00") == 0) {
+            app->display_text = malloc(sizeof(char) * 100);
+            sprintf(app->display_text, "%s", button->text);
         } else {
-            strcat(app->display_text, " ");
             strcat(app->display_text, button->text);
-        }
-        if (app->operation_clicked) {
-            app->number_right       = atof(button->text);
-        } else {
-            app->number_left        = atof(button->text);
         }
         return;
     }
@@ -401,31 +381,39 @@ void calc_display_result_screen(Calc *app)
     free(display_text);
 }
 
-void calc_evaluate(Calc *app)
+float calc_evaluate(Calc *app)
 {
-    switch (app->operation)
-    {
-    case '+':
-        app->result = app->number_left + app->number_right;
-        break;
-    case '-':
-        app->result = app->number_left - app->number_right;
-        break;
-    case '*':
-        app->result = app->number_left * app->number_right;
-        break;
-    case '/':
-        app->result = app->number_left / app->number_right;
-        break;
-    case '%':
-        app->result = app->number_left / 100;
-        break;
-    default:
-        break;
+    char *token = strtok(app->display_text, " ");
+
+    // Check if the first token is a number
+    if (token[0] >= '0' && token[0] <= '9') {
+        app->number_left = atof(token);
+    } else {
+        app->number_left = app->result;
     }
 
-    app->do_evaluate        = false;
-    app->operation_clicked  = false;
-    app->number_left        = app->result;
-    sprintf(app->display_text, "%.2f", app->result);
+    while (token != NULL) {
+        if (strcmp(token, "+") == 0) {
+            app->number_right = atof(strtok(NULL, " "));
+            app->number_left = app->number_left + app->number_right;
+        } else if (strcmp(token, "-") == 0) {
+            app->number_right = atof(strtok(NULL, " "));
+            app->number_left = app->number_left - app->number_right;
+        } else if (strcmp(token, "*") == 0) {
+            app->number_right = atof(strtok(NULL, " "));
+            app->number_left = app->number_left * app->number_right;
+        } else if (strcmp(token, "/") == 0) {
+            app->number_right = atof(strtok(NULL, " "));
+            app->number_left = app->number_left / app->number_right;
+        } else if (strcmp(token, "%") == 0) {
+            app->number_right = atof(strtok(NULL, " "));
+            app->number_left = (int)app->number_left % (int)app->number_right;
+        } else {
+            app->number_left = atof(token);
+        }
+        token = strtok(NULL, " ");
+    }
+
+    sprintf(app->display_text, "%.2f", app->number_left);
+    return app->number_left;
 }
