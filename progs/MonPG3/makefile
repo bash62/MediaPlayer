@@ -11,7 +11,7 @@ SRC_DIR = ./src
 OUTPUT = $(BIN_DIR)/MonPG3
 LOCAL_OUTPUT = $(LOCAL_BIN_DIR)/MonPG3
 
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/human_bench.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/pong.o
 
 all: clean_global MonPG3_global
 

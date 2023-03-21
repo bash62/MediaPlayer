@@ -104,6 +104,20 @@ void window_draw_rect(Window *window, SDL_Rect *rect, SDL_Color color)
   }
 }
 
+void window_draw_filled_rect(Window *window, SDL_Rect *rect, SDL_Color color)
+{
+  if (SDL_SetRenderDrawColor(window->renderer, color.r, color.g, color.b, color.a) != 0) {
+    fprintf(stderr, "Erreur lors du rendu du rectangle plein : %s\n", SDL_GetError());
+    cleanup(window->window, window->renderer, NULL);
+    return;
+  }
+  if (SDL_RenderFillRect(window->renderer, rect) != 0) {
+    fprintf(stderr, "Erreur lors du rendu du rectangle plein : %s\n", SDL_GetError());
+    cleanup(window->window, window->renderer, NULL);
+    return;
+  }
+}
+
 void window_draw_line(
   Window *window, 
   int x1, int y1, 
@@ -288,4 +302,6 @@ void window_toggle_fullscreen(Window *window)
     SDL_SetWindowFullscreen(window->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
     window->fullscreen = true;
   }
+
+  SDL_GetWindowSize(window->window, &window->width, &window->height);
 }

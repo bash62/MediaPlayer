@@ -5,7 +5,7 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 
-#include "human_bench.h"
+#include "pong.h"
 
 #define WINDOW_WIDTH 1120
 #define WINDOW_HEIGHT 800
@@ -13,7 +13,7 @@
 
 int main() {
    srand(time(NULL));
-   HumanBench *app;
+   Pong *app;
 
    // Initialize SDL
    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -37,16 +37,16 @@ int main() {
    }
 
    // Initialize MediaPlayer App instance
-   app = human_bench_create(WINDOW_WIDTH, WINDOW_HEIGHT);
+   app = pong_create(WINDOW_WIDTH, WINDOW_HEIGHT);
    if (app == NULL) {
       return EXIT_FAILURE;
    }
 
    // Start the app
-   human_bench_run(app);
+   pong_run(app);
 
    // Destroy the app instance at the end
-   human_bench_destroy(app);
+   pong_destroy(app);
 
    return EXIT_SUCCESS;
 }

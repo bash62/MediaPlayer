@@ -97,6 +97,18 @@ void window_draw_rect(
 );
 
 /**
+ * @brief Draw a filled rectangle on the window
+ * @param window Window
+ * @param rect SDL_Rect
+ * @param color SDL_Color
+ */
+void window_draw_filled_rect(
+    Window *window, 
+    SDL_Rect *rect, 
+    SDL_Color color
+);
+
+/**
  * @brief Draw a line on the window
  * @param window Window
  * @param x1 X1
