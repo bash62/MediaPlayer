@@ -128,7 +128,7 @@ void human_bench_render(HumanBench *app)
 
     if (app->state == APP_STATE_INIT) {
         // Render the menu
-        human_bench_display_menu(app);
+        human_bench_display_init(app);
     }
 
     if (app->state == APP_STATE_RUNNING) {
@@ -143,6 +143,11 @@ void human_bench_render(HumanBench *app)
 
         // Render the score
         human_bench_display_score(app);
+    }
+
+    if (app->state == APP_STATE_MENU) {
+        // Render the end screen
+        human_bench_display_menu(app);
     }
 
     // Update the window
@@ -278,7 +283,7 @@ void human_bench_generate_target(HumanBench *app)
     app->target_y = rand() % (app->window->height - TARGET_RADIUS) + TARGET_RADIUS;
 }
 
-void human_bench_display_menu(HumanBench *app)
+void human_bench_display_init(HumanBench *app)
 {
     // Display "Right click to start"
     char *text = "Press SPACE to start";
@@ -313,4 +318,12 @@ void human_bench_display_score(HumanBench *app)
     char text[100];
     sprintf(text, "%d / %d / 100", app->score, app->errors);
     window_draw_text(app->window, 2, 80, text, 30, GREEN_COLOR, ALIGN_LEFT);
+}
+
+void human_bench_display_menu(HumanBench *app)
+{
+    // Display the end message
+    char text[100];
+    sprintf(text, "Your score: %d / 100", app->score);
+    window_draw_text(app->window, app->window->width / 2, app->window->height / 2, text, 30, WHITE_COLOR, ALIGN_CENTER);
 }

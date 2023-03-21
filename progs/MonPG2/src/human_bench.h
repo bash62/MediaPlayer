@@ -15,7 +15,8 @@
 typedef enum {
     APP_STATE_EXIT,
     APP_STATE_INIT,
-    APP_STATE_RUNNING
+    APP_STATE_RUNNING,
+    APP_STATE_MENU,
 } AppState;
 
 typedef struct {
@@ -73,7 +74,7 @@ void human_bench_handle_mouse_right_click(HumanBench *app);
 
 void human_bench_generate_target(HumanBench *app);
 
-void human_bench_display_menu(HumanBench *app);
+void human_bench_display_init(HumanBench *app);
 
 void human_bench_display_target(HumanBench *app);
 
@@ -82,5 +83,7 @@ void human_bench_display_best_time(HumanBench *app);
 void human_bench_display_current_time(HumanBench *app);
 
 void human_bench_display_score(HumanBench *app);
+
+void human_bench_display_menu(HumanBench *app);
 
 #endif // _HUMAN_BENCH_H_
