@@ -8,20 +8,20 @@ LOCAL_BIN_DIR = ./bin
 OBJ_DIR = ./obj
 SRC_DIR = ./src
 
-OUTPUT = $(BIN_DIR)/MonPG2
-LOCAL_OUTPUT = $(LOCAL_BIN_DIR)/MonPG2
+OUTPUT = $(BIN_DIR)/MonPG3
+LOCAL_OUTPUT = $(LOCAL_BIN_DIR)/MonPG3
 
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/human_bench.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/window.o $(OBJ_DIR)/pong.o
 
-all: clean_global MonPG2_global
+all: clean_global MonPG3_global
 
-local: clean_local MonPG2_local
+local: clean_local MonPG3_local
 
-MonPG2_global: $(OBJS)
+MonPG3_global: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(OUTPUT) $(CLIBS)
 	cp -r ./fonts $(BIN_DIR)
 
-MonPG2_local: $(OBJS)
+MonPG3_local: $(OBJS)
 	mkdir -p $(LOCAL_BIN_DIR)
 	$(CC) $(CFLAGS) $(OBJS) -o $(LOCAL_OUTPUT) $(CLIBS)
 
