@@ -1,6 +1,3 @@
 #!/bin/bash
 
-make
-
-echo "Done."
-echo ""
+rm -r bin && ./compile_progs.sh && make && ./MediaPlayer

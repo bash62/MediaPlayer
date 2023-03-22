@@ -9,7 +9,7 @@ OBJ_DIR = ./obj
 SRC_DIR = ./src
 
 OUTPUT_NAME = $(BIN_DIR)/MonPG5
-LOCAL_OUTPUT_NAME = $(LOCAL_BIN_DIR)/MonPG5
+LOCAL_OUTPUT = $(LOCAL_BIN_DIR)/MonPG5
 
 OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/bonus.o $(OBJ_DIR)/game.o $(OBJ_DIR)/window.o $(OBJ_DIR)/player.o $(OBJ_DIR)/map.o $(OBJ_DIR)/ghost.o 
 

